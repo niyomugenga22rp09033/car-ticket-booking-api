@@ -14,6 +14,11 @@ const pool = new Pool({
   ssl: { rejectUnauthorized: false },
 });
 
+// Handle pool errors
+pool.on('error', (err) => {
+  console.error('Unexpected error on idle client', err);
+});
+
 pool.connect()
   .then(() => console.log("✅ Connected to database"))
   .catch(err => console.error("❌ Database connection error:", err));
@@ -132,14 +137,13 @@ app.get('/bookings', authenticateToken, async (req, res) => {
       SELECT 
         b.id,
         b.travel_date,
-        b.created_at,
         c.name as car_name,
         c.details as car_details,
         c.price as car_price
       FROM bookings b
       JOIN cars c ON b.car_id = c.id
       WHERE b.user_id = $1
-      ORDER BY b.created_at DESC
+      ORDER BY b.id DESC
     `, [req.user.id]);
     
     res.json({ bookings: result.rows });
@@ -158,7 +162,6 @@ app.get('/bookings/:id', authenticateToken, async (req, res) => {
       SELECT 
         b.id,
         b.travel_date,
-        b.created_at,
         c.name as car_name,
         c.details as car_details,
         c.price as car_price,
